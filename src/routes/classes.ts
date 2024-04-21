@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Class } from '../models/class';
-import { Student } from '../models/students';
+import { Student } from '../models/student';
 import mongoose from 'mongoose';
 
 const router = Router();
