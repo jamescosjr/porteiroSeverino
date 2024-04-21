@@ -1,7 +1,15 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const subjectSchema = new mongoose.Schema({
-    name: String,
+interface ISubject extends Document {
+    id: string;
+    name: string;
+}
+
+const subjectSchema: Schema = new Schema({
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
 });
 
-export const Subject = mongoose.model('Subject', subjectSchema);
+const Subject = mongoose.models.Subject || mongoose.model<ISubject>('Subject', subjectSchema);
+
+export { Subject };

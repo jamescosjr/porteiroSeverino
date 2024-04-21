@@ -24,10 +24,10 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:email', async (req, res) => {
     try {
-        const professorId = new mongoose.Types.ObjectId(req.params.id);
-        const professor = await Professor.findById(professorId);
+        const professorEmail = req.params.email;
+        const professor = await Professor.findOne({ email: professorEmail });
         if (!professor) {
             return res.status(404).json({ message: 'Professor não encontrado' });
         }
@@ -37,11 +37,11 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:email', async (req: Request, res: Response) => {
     try {
-        const professorId = new mongoose.Types.ObjectId(req.params.id);
+        const professorEmail = req.params.email;
         const professorData = req.body;
-        const updatedProfessor = await Professor.findByIdAndUpdate(professorId, professorData, { new: true });
+        const updatedProfessor = await Professor.findOneAndUpdate({ email: professorEmail }, professorData, { new: true });
         if (!updatedProfessor) {
             return res.status(404).json({ message: 'Professor não encontrado' });
         }
@@ -51,10 +51,10 @@ router.put('/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:email', async (req: Request, res: Response) => {
     try {
-        const professorId = new mongoose.Types.ObjectId(req.params.id);
-        const deletedProfessor = await Professor.findByIdAndDelete(professorId);
+        const professorEmail = req.params.email;
+        const deletedProfessor = await Professor.findOneAndDelete({ email: professorEmail });
         if (!deletedProfessor) {
             return res.status(404).json({ message: 'Professor não encontrado' });
         }
@@ -64,60 +64,47 @@ router.delete('/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.post('/:profId/subjects/:subjId', async (req, res) => {
+router.post('/:email/subjects/:subjId', async (req, res) => {
     try {
-        const { profId, subjId } = req.params;
-        if (!mongoose.isValidObjectId(profId) || !mongoose.isValidObjectId(subjId)) {
-            return res.status(400).json({ message: 'IDs inválidos' });
+        const { email, subjId } = req.params;
+        const subject = await Subject.findById(subjId);
+
+        if (!subject) {
+            return res.status(404).json({ message: 'Disciplina não encontrada' });
         }
 
-        const professorId = new mongoose.Types.ObjectId(profId);
-        const subjectId = new mongoose.Types.ObjectId(subjId);
+        const updatedProfessor = await Professor.findOneAndUpdate({ email }, { $addToSet: { subjects: subjId } }, { new: true });
 
-        const professor = await Professor.findById(professorId);
-        const subject = await Subject.findById(subjectId);
-
-        if (!professor || !subject) {
-            return res.status(404).json({ message: 'Professor ou Disciplina não encontrados' });
-        } 
-
-        if (professor.subjects.includes(subjectId)) {
-            return res.status(400).json({ message: 'Professor já associado à disciplina' });
-        }
-
-        professor.subjects.push(subjectId);
-        await professor.save();
-
-        res.json({ message: 'Professor associado à disciplina com sucesso' });
-    }   catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erro ao associar professor à disciplina', error });
-    }
-});
-
-router.delete('/:profId/subjects/:subjId', async (req, res) => {
-    try {
-        const { profId, subjId } = req.params;
-        if (!mongoose.isValidObjectId(profId) || !mongoose.isValidObjectId(subjId)) {
-            return res.status(400).json({ message: 'IDs inválidos' });
-        }
-
-        const professorId = new mongoose.Types.ObjectId(profId);
-        const subjectId = new mongoose.Types.ObjectId(subjId);
-
-        const professor = await Professor.findById(professorId);
-
-        if (!professor) {
+        if (!updatedProfessor) {
             return res.status(404).json({ message: 'Professor não encontrado' });
         }
 
-        professor.subjects = professor.subjects.filter((subjectId: mongoose.Types.ObjectId) => !subjectId.equals(subjectId));
-        await professor.save();
-
-        res.json({ message: 'Professor desassociado da disciplina com sucesso' });
-    }   catch (error) {
+        res.json({ message: 'Disciplina associada ao professor com sucesso' });
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Erro ao desassociar professor da disciplina', error });
+        res.status(500).json({ message: 'Erro ao associar disciplina ao professor', error });
+    }
+});
+
+router.delete('/:email/subjects/:subjId', async (req, res) => {
+    try {
+        const { email, subjId } = req.params;
+        const subject = await Subject.findById(subjId);
+
+        if (!subject) {
+            return res.status(404).json({ message: 'Disciplina não encontrada' });
+        }
+
+        const updatedProfessor = await Professor.findOneAndUpdate({ email }, { $pull: { subjects: subjId } }, { new: true });
+
+        if (!updatedProfessor) {
+            return res.status(404).json({ message: 'Professor não encontrado' });
+        }
+
+        res.json({ message: 'Disciplina removida do professor com sucesso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao desassociar disciplina do professor', error });
     }
 });
 

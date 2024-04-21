@@ -1,15 +1,19 @@
-// /models/professor.ts
-
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface IProfessor extends Document {
     name: string;
-    subjects: mongoose.Types.ObjectId[];
+    email: string;
+    subjects: string[];
 }
 
 const professorSchema: Schema = new Schema({
     name: { type: String, required: true },
-    subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }]
+    email: { type: String, required: true, unique: true },
+    subjects: [{ type: String }]
+}, {
+    timestamps: true
 });
 
-export const Professor = mongoose.model<IProfessor>('Professor', professorSchema);
+const Professor = mongoose.models.Professor || mongoose.model<IProfessor>('Professor', professorSchema);
+
+export { Professor };

@@ -6,6 +6,9 @@ import studentsRouter from './routes/students';
 import classesRouter from './routes/classes';
 import attendancesRouter from './routes/attendances';
 import dotenv from 'dotenv';
+import { Student } from './models/student';
+import { Class } from './models/class';
+import { Attendance } from './models/attendance';
 
 dotenv.config();
 
@@ -18,6 +21,11 @@ if (!DATABASE_URL) {
 }
 
 connectDB(DATABASE_URL);
+
+// Verifica se os modelos já foram definidos antes de chamar connectDB
+if (!Student || !Class || !Attendance) {
+    throw new Error('Os modelos do Mongoose não foram definidos corretamente');
+}
 
 app.use('/subjects', subjectsRouter);
 app.use('/professors', professorsRouter);

@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Class } from '../models/class';
 import { Student } from '../models/student';
-import mongoose from 'mongoose';
 
 const router = Router();
 
@@ -24,12 +23,12 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-router.put('/:id', async (req: Request, res: Response) => {
-    const turmaId = new mongoose.Types.ObjectId(req.params.id);
+router.put('/:classId', async (req: Request, res: Response) => {
+    const classId = req.params.classId;
     const turmaData = req.body;
 
     try {
-        const updatedTurma = await Class.findByIdAndUpdate(turmaId, turmaData, { new: true });
+        const updatedTurma = await Class.findOneAndUpdate({ classId }, turmaData, { new: true });
         if (!updatedTurma) {
             return res.status(404).json({ message: 'Turma não encontrada' });
         }
@@ -39,11 +38,11 @@ router.put('/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/:id', async (req: Request, res: Response) => {
-    const turmaId = new mongoose.Types.ObjectId(req.params.id);
+router.delete('/:classId', async (req: Request, res: Response) => {
+    const classId = req.params.classId;
 
     try {
-        const deletedTurma = await Class.findByIdAndDelete(turmaId);
+        const deletedTurma = await Class.findOneAndDelete({ classId });
         if (!deletedTurma) {
             return res.status(404).json({ message: 'Turma não encontrada' });
         }
@@ -53,27 +52,23 @@ router.delete('/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.post('/:classId/students/:studentId', async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.classId) || !mongoose.isValidObjectId(req.params.studentId)) {
-        return res.status(400).json({ message: 'IDs inválidos' });
-    }
-
-    const classId = new mongoose.Types.ObjectId(req.params.classId);
-    const studentId = new mongoose.Types.ObjectId(req.params.studentId);
+router.post('/:classId/students/:studentEmail', async (req, res) => {
+    const classId = req.params.classId;
+    const studentEmail = req.params.studentEmail;
 
     try {
-        const classObj = await Class.findById(classId);
-        const student = await Student.findById(studentId);
+        const classObj = await Class.findOne({ classId });
+        const student = await Student.findOne({ email: studentEmail });
 
         if (!classObj || !student) {
             return res.status(404).json({ message: 'Turma ou aluno não encontrado' });
         }
 
-        if (classObj.students.includes(studentId)) {
+        if (classObj.students.includes(student.email)) {
             return res.status(400).json({ message: 'Aluno já está matriculado na turma' });
         }
 
-        classObj.students.push(studentId);
+        classObj.students.push(student.email);
         await classObj.save();
 
         res.json({ message: 'Aluno matriculado na turma com sucesso' });
@@ -83,22 +78,18 @@ router.post('/:classId/students/:studentId', async (req, res) => {
     }
 });
 
-router.delete('/:classId/students/:studentId', async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.classId) || !mongoose.isValidObjectId(req.params.studentId)) {
-        return res.status(400).json({ message: 'IDs inválidos' });
-    }
-
-    const classId = new mongoose.Types.ObjectId(req.params.classId);
-    const studentId = new mongoose.Types.ObjectId(req.params.studentId);
+router.delete('/:classId/students/:studentEmail', async (req, res) => {
+    const classId = req.params.classId;
+    const studentEmail = req.params.studentEmail;
 
     try {
-        const classObj = await Class.findById(classId);
+        const classObj = await Class.findOne({ classId });
 
         if (!classObj) {
             return res.status(404).json({ message: 'Turma não encontrada' });
         }
 
-        classObj.students = classObj.students.filter((sId) => !sId.equals(studentId));
+        classObj.students = classObj.students.filter((email: string) => email !== studentEmail);
         await classObj.save();
 
         res.json({ message: 'Aluno removido da turma com sucesso' });
