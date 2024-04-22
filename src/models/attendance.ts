@@ -10,7 +10,7 @@ interface IQuestionnaire {
 }
 
 interface IAttendance extends mongoose.Document {
-    classId: mongoose.Types.ObjectId;
+    classId: string;
     studentId: string;
     startTime: Date;
     endTime?: Date;
