@@ -26,7 +26,7 @@ const questionnaireSchema = new mongoose.Schema({
 });
 
 const attendanceSchema = new mongoose.Schema({
-    classId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    classId: { type: String, required: true },
     studentId: { type: String, required: true },
     startTime: { type: Date, required: true },
     endTime: { type: Date },
