@@ -1,18 +1,30 @@
 import { Router } from "express";
 import { Attendance } from "../models/attendance";
+import { Class } from "../models/class";
+import { Professor } from "../models/professor";
 
 const router = Router();
 
 router.post('/:classId/attendance/start', async (req, res) => {
     try {
         const { classId } = req.params;
-        const { studentId, feelings, meme, villain, expectations, mood } = req.body;
-        const startTime = new Date();
-        
-        if (!studentId || !feelings || !meme || !villain || !expectations || !mood) {
-            return res.status(400).json({ message: 'Todos os campos do questionário devem ser preenchidos' });
+        const { studentId, feelings, meme, villain, expectations, mood, professorEmail } = req.body;
+
+        if (!studentId || !feelings || !meme || !villain || !expectations || !mood || !professorEmail) {
+            return res.status(400).json({ message: 'Todos os campos do questionário devem ser preenchidos, incluindo professorEmail' });
+        }
+
+        const classExists = await Class.exists({ classId });
+        if (!classExists) {
+            return res.status(404).json({ message: 'Turma não encontrada' });
+        }
+
+        const professorExists = await Professor.exists({ email: professorEmail });
+        if (!professorExists) {
+            return res.status(404).json({ message: 'Professor não encontrado' });
         }
         
+        const startTime = new Date();
         const attendance = new Attendance({ 
             classId, 
             studentId, 
